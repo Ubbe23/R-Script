@@ -1,0 +1,73 @@
+
+								#R-Scripts
+
+##### Differential Expression Analysis with DESeq2
+
+# Loading libraries
+library(DESeq2)		
+library(ggplot2)		
+library(edgeR)		
+library(readODS)		
+library(limma)		
+library(RColorBrewer)		
+library(gplots)		
+library(apeglm)		
+library(dplyr)		
+library(calibrate)		
+library(pheatmap)		
+library(vsn)		
+		
+# Importing the input files: "design table" and "count table"
+dt<-read.csv("design_table.csv",header=TRUE,sep=",")		
+ct<-read.csv("count_table.csv",header=TRUE,sep=",")		
+str(df)
+str(ct)
+ct<-as.matrix(ct)		
+	
+# Constructing the DESeqDataSet
+# Design argument must be provided with the name of the design variable name
+dds<-DESeqDataSetFromMatrix(countData=ct,colData=dt,design=~Pheno)		
+# Visualizing the design of the experiment and eventually change its levels
+dds$Pheno
+dds$Pheno<-factor(dds$Pheno,levels=c("control","treated"))		
+
+# Differential expression analysis (apeglm method)
+# There are three different "fit types": Parametric, Local and Mean. By plotting each of them it is possible to detect the best one
+dds<-DESeq(dds,fitType="parametric/local/mean")
+plotDispEsts(dds)
+resultsNames(dds)		
+resLFC <- lfcShrink(dds,coef="condition name",type="apeglm")
+View(res)
+summary(res)
+#number of genes with a pvalue below 0.05	
+sum(resLFC$padj<0.05,na.rm=TRUE)
+
+# Graphs 
+
+# Boxplot for sample size visualization
+boxplot(log10(counts(dds)+1),las=2)		
+boxplot(log10(counts(dds,normalized=TRUE)+1),las=2)
+
+# variance-stabilizing transformation and following heatmap, pca and dendogram
+vsd <- vst(dds, blind=TRUE)	
+assay(vsd[,])
+sampleDists <- dist(t(assay(vsd)))		
+sampleDistMatrix <- as.matrix(sampleDists)		
+rownames(sampleDistMatrix) <- paste(vsd$Pheno, vsd$ID,sep="-")
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)		
+pheatmap(sampleDistMatrix,		
+         clustering_distance_rows=sampleDists,		
+         clustering_distance_cols=sampleDists,		
+         col=colors)		
+plotPCA(vsd, intgroup=c("Pheno", "ID"))		
+plot(hclust(sampleDists))		
+
+# Volcan Plot
+with(res,plot(log2FoldChange,padj, pch=20, main="Volcano plot", xlim=c(-7,7)))		
+with(subset(res,padj<0.05 ),points(log2FoldChange,padj, pch=20, col="red"))		
+with(subset(res,abs(log2FoldChange)>1), points(log2FoldChange,padj, pch=20, col="orange"))		
+with(subset(res,padj<0.05 & abs(log2FoldChange)>1), points(log2FoldChange, padj, pch=20, col="green"))	
+
+# MA Plot
+DESeq2::plotMA(res,ylim=c(-7,9),alpha=0.05,main="MAplot")
+

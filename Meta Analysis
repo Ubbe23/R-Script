@@ -1,0 +1,73 @@
+								#R-Scripts
+
+#####Meta Analysis after DESeq2 Analysis
+
+# Loading libraries
+library(metaRNASeq)
+
+# Importing the input files: "log2FoldChange","pvalue" and "padj-value"
+
+log2_2<-read_excel("log_2.xlsx")
+pv_2<-read_excel("pv_2.xlsx")
+adj_2<-read_excel("adj_2.xlsx")
+log3_3<-read_excel("log_3.xlsx")
+pv_3<-read_excel("pv_3.xlsx")
+adj_3<-read_excel("adj_3.xlsx")
+log5_5<-read_excel("log_5.1.xlsx")
+pv_5.1<-read_excel("pv_5.1.xlsx")
+adj_5.1<-read_excel("adj_5.1.xlsx")
+rawpval<-list("pval2"=pv_2[["P-value"]],"pval3"=pv_3[["P-value"]],"pval5.1"=pv_5_1[["P-value"]])
+adjpval<-list("adjpval2"=padj_2[["P-adj"]],"adjpval3"=padj_3[["P-adj"]],"adjpval5"=padj_5_1[["P-adj"]])
+DE<-mapply(adjpval,FUN=function(x) ifelse(x <= 0.05, 1, 0)) #Matrix of DEGs. 1 if <0.05, 0 if >0.05
+colnames(DE)=c("E-GEOD-53655","E-GEOD-67488","E-GEOD-58335")
+
+# Distribution of input file values
+
+hist(pv_2[[1]], breaks=100, col="grey", main="Study 2", xlab="Raw p-values")
+hist(pv_3[[1]], breaks=100, col="grey", main="Study 3", xlab="Raw p-values")
+hist(pv_5_1[[1]], breaks=100, col="grey", main="Study 5.1", xlab="Raw p-values")
+hist(adj_2[[1]], breaks=100, col="grey", main="Study 2", xlab="adj_pv")
+hist(adj_3[[1]], breaks=100, col="grey", main="Study 3", xlab="adj_pv")
+hist(adj_5_1[[1]], breaks=100, col="grey", main="Study 5.1", xlab="adj_pv")
+
+#Meta Analysis with the two different algorithms: Fishcomb and Invnorm
+
+fishcomb1<-fishercomb(rawpval,BHth = 0.05)
+hist(fishcomb1$rawpval, breaks=100, col="grey", main="Fisher method",xlab = "Raw p-values (meta-analysis)")
+invnormcomb<-invnorm(rawpval,nrep=c(12,20,12),BHth = 0.05) # nrep: number of subjects involved
+hist(invnormcomb$rawpval, breaks=100, col="grey",main="Inverse normal method",xlab = "Raw p-values (meta-analysis)")
+
+# Log2FoldChange trend 
+
+FC<-list("FC2"=lg_FC_2[["log2(FC)"]],"FC3"=lg_FC_3[["log2(FC)"]],"FC5"=lg_FC_5_1[["log2(FC)"]])
+signsFC<-mapply(FC,FUN=function(x) sign(x)) # Sign function returns 1 if LFC<0, 1 if LFC>0
+sumsigns<-apply(signsFC,1,sum)# Sum over rows
+commonsgnFC<-ifelse(abs(sumsigns)==dim(signsFC)[2], sign(sumsigns),0)
+
+# Venn diagramm
+
+plot2<-venn.diagram(x = list(DeSeq2=which(DENF[,c("DEstudy2","DEstudy3","DEstudy5.1")]==1), 
+                             Fisher=which(DENF[,"DE.fishercomb"]==1),
+                             Inv=which(DENF[,"DE.invnorm"]==1)),
+                    filename ="Umb2.tiff", col = "black",
+                    fill = c("blue", "red","green"),
+                    margin=0.05, alpha = 0.6,resolution = 300)
+tiff("plot2.tiff")
+grid.draw(plot2);
+dev.off();
+
+# Saving results
+DEresults<-data.frame(DE,"DE.fishercomb"=ifelse(fishcomb1$adjpval<=0.05,1,0),"DE.invnorm"=ifelse(invnormcomb$adjpval<=0.05,1,0))
+write.csv(signsFC,"Andamento lgFC2")
+write.csv(commonsgnFC,"lgFC2_Concordanza")
+#unionDE<-unique(c(fishcomb1$DEindices,invnormcomb$DEindices))
+
+
+
+
+
+
+
+
+
+
