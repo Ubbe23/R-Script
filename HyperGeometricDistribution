@@ -1,0 +1,111 @@
+setwd("/home/umberto/Scrivania/Sassera/Progetti/Ghost/Progetto_Ghost/UMAP_ANALISI")
+library(distributions3)
+library(stats)
+binary_mt<-read.csv("BinaryDataSet_Metadata.csv",header=TRUE,sep=",",stringsAsFactors = FALSE)
+table(binary_mt$Materiali,binary_mt$Cluster)
+###Distribuzione ipergeometrica dei materiali nei cluster
+#Dimensione dei cluster
+k<-c(549,126,438,375,2240,42,217,43,201,107,115,263,114,624,581,174,138,22,213,44,45,77,17,22)
+sum(k)
+#CUTE
+#Materiali cutanei per cluster
+cutanei<-c(81,51,74,147,705,10,48,10,38,18,54,118,59,214,187,75,46,10,78,8,14,40,2,6)
+#Somma materiali cutanei in tutti i cluster
+sum_cutanei<-sum(cutanei)
+#Somma materiali non cutanei
+n_cutanei<-6787 - sum_cutanei
+p_cute<-as.numeric()
+for (i in 1:length(k)){
+  hg<-HyperGeometric(sum_cutanei,n_cutanei,k[i])
+  p<-1-cdf(hg,cutanei[i])
+  print(p)
+  p_cute<-c(p_cute,p)
+}
+p_cute
+#correggo i pvalue nominali per Benjamini
+padj_cute<-p.adjust(p_cute,method ="BH",n=length(p_cute));padj_cute
+
+#RESPIRATORIO
+respiratorio<-c(126,9,77,52,283,5,32,7,34,18,8,16,14,81,67,5,10,0,25,5,7,5,3,0)
+sum_respiratorio<-sum(respiratorio)
+n_respiratorio<-6787 - sum_respiratorio
+p_respiratorio<-as.numeric()
+for (i in 1:length(k)){
+  hg<-HyperGeometric(sum_respiratorio,n_respiratorio,k[i])
+  p<-1-cdf(hg,respiratorio[i])
+  print(p)
+  p_respiratorio<-c(p_respiratorio,p)
+}
+p_respiratorio
+padj_resp<-p.adjust(p_respiratorio,method ="BH",n=length(p_respiratorio));padj_resp
+
+#MOLLI
+molli<-c(148,38,151,108,668,15,69,17,70,28,40,79,24,187,157,63,39,7,61,16,13,17,9,13)
+sum_molli<-sum(molli)
+n_molli<-6787 - sum_molli
+p_molli<-as.numeric()
+for(i in 1:length(k)){
+  hg<-HyperGeometric(sum_molli,n_molli,k[i])
+  p<-1-cdf(hg,molli[i])
+  print(p)
+  p_molli<-c(p_molli,p)
+}
+p_molli
+padj_molli<-p.adjust(p_molli,method ="BH",n=length(p_molli));padj_molli
+
+#URINE
+urine<-c(51,5,28,9,71,1,8,2,15,7,4,6,2,31,34,4,7,2,10,7,3,1,1,1)
+sum_urine<-sum(urine)
+n_urine<-6787 - sum_urine
+p_urine<-as.numeric()
+for(i in 1:length(k)){
+  hg<-HyperGeometric(sum_urine,n_urine,k[i])
+  p<-1-cdf(hg,urine[i])
+  print(p)
+  p_urine<-c(p_urine,p)
+}
+p_urine
+padj_urine<-p.adjust(p_urine,method ="BH",n=length(p_urine));padj_urine
+
+#ORTOPEDICI
+ortopedici<-c(10,3,9,9,60,0,5,1,4,2,0,7,1,7,17,4,4,0,6,1,0,0,0,2)
+sum_ortopedici<-sum(ortopedici)
+n_ortopedici<-6787 - sum_ortopedici
+p_ortopedici<-as.numeric()
+for(i in 1:length(k)){
+  hg<-HyperGeometric(sum_ortopedici,n_ortopedici,k[1])
+  p<-1-cdf(hg,ortopedici[i])
+  print(p)
+  p_ortopedici<-c(p_ortopedici,p)
+}
+padj_ortopedici<-p.adjust(p_ortopedici,method="BH",n=length(p_ortopedici));padj_ortopedici
+
+#VARI
+vari<-c(6,2,10,9,96,1,14,0,1,1,1,4,0,19,11,1,7,1,5,0,2,4,1,0)
+sum_vari<-sum(vari)
+n_vari<-6787 - sum_vari
+p_vari<-as.numeric()
+for(i in 1:length(k)){
+  hg<-HyperGeometric(sum_vari,n_vari,k[i])
+  p<-1-cdf(hg,vari[i])
+  print(p)
+  p_vari<-c(p_vari,p)
+}
+padj_vari<-p.adjust(p_vari,method="BH",n=length(p_vari));p_vari
+
+# EMOCULTURE
+emoculture<-c(127,18,89,41,357,10,41,6,39,33,8,33,14,85,108,22,25,2,28,7,6,10,1,0)
+sum_emoculture<-sum(emoculture)
+n_emoculture<-6787 - sum_emoculture
+p_emoculture<-as.numeric()
+for(i in 1:length(k)){
+  hg<-HyperGeometric(sum_emoculture,n_emoculture,k[i])
+  p<-1-cdf(hg,emoculture[i])
+  print(p)
+  p_emoculture<-c(p_emoculture,p)
+}
+padj_emoculture<-p.adjust(p_emoculture,method="BH",n=length(p_emoculture));padj_emoculture
+
+p_tot<-c(p_emoculture,p_urine,p_respiratorio,p_ortopedici,p_vari,p_cute,p_molli)
+padj_tot<-p.adjust(p_tot,method="BH",n=length(p_tot));padj_tot
+
