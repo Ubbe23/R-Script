@@ -20,33 +20,12 @@ library(ape)
 library(umap)
 
 # Import of dataset
-
-data<-read.csv("dataset.csv",header=TRUE,stringsAsFactors = FALSE,sep=",")
-d<-data
+d<-read.csv("dataset.csv",header=TRUE,stringsAsFactors = FALSE,sep=",")
 str(d)
 
-# Conversion into a binary dataset (1 and 0 values)
-
-for(i in d[n:m]){
-  for(j in i) {
-    if (length(grep('R',j))!=0){
-      d[n:m][d[n:m]==j]<-1
-    }
-    if (length(grep('S',j))!=0){
-      d[n:m][d[n:m]==j]<-0
-    }
-  }
-}
-
-d1<-d
-d1[,n:m] = apply(d1[,n:m], 2, function(x) as.numeric(as.character(x)))
-str(d1)
-d1<-as.matrix(d1[,n:m)])
-
 # Application and visualization of the UMAP algorithm
-
-umapx<-umap::umap(d1)
-umap_M2<-umapx$layout
+umapx<-umap::umap(d)
+umap_M2<-umapx$layout #extraction of the first 2 principal components
 plot(umap_M2)
 
 # Matching of isolates with their own year
